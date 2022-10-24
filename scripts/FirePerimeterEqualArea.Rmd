@@ -1,0 +1,97 @@
+---
+title: "FiresEqualArea"
+author: "Anna Talucci"
+date: '2022-10-20'
+output: html_document
+---
+# Overview
+
+Fire perimeters to equal area
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sp)
+library(sf)
+library(ids)
+```
+
+# Data
+
+```{r}
+fires = st_read("../data/firePolygons/AK_CA_firePolygons.shp", "AK_CA_firePolygons")
+```
+
+```{r}
+fires
+```
+```{r}
+head(fires)
+tail(fires)
+```
+```{r}
+plot(st_geometry(fires))
+```
+```{r}
+fires %>% filter(FireYear == 2015 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+```{r}
+fires %>% filter(FireYear == 2019 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+```{r}
+fires %>% filter(FireYear == 2020 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+
+```{r}
+fires %>% filter(FireYear == 2021 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+# Fire perimeter projection
+```{r}
+st_crs(fires)$proj4string
+st_crs(fires)$epsg
+```
+# Projections
+```{r}
+wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
+```
+
+```{r}
+ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+```
+
+# Cast as Polygons
+```{r}
+fires1 = st_cast(fires$geometry, "POLYGON")
+fires1
+```
+# Transform to Equal area
+
+```{r}
+fires_ea = st_transform(fires1, crs = st_crs(ea_proj))
+```
+
+```{r}
+fires_ea %>% 
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+
+# Write to file
+```{r}
+st_write(fires_ea, "../outputs/FiresEqualArea.shp", driver="ESRI Shapefile")
+```
+

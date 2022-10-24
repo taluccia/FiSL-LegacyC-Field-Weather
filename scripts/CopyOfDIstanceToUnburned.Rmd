@@ -1,0 +1,120 @@
+---
+title: "Distance To Unburned Test"
+author: "Anna Talucci"
+date: '2022-10-20'
+output: html_document
+---
+# Overview
+
+Distance from field site to nearest unburned.
+
+-- Process by fire year
+-- Take Rasters
+-- Convert raster to point 
+--
+-- Measure distance from point to polygon (st_distance or st_nearest maybe?)
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sp)
+library(sf)
+library(ids)
+library(terra)
+library(gdalUtilities)
+```
+# Projections
+```{r}
+wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
+```
+
+```{r}
+ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+```
+
+# Data
+
+
+## Fire perimeters by Year
+
+```{r}
+fieldpts2015 = st_read("../data/FieldPointsShp/FieldPoints2015.shp", "FieldPoints2015")
+fieldpts2019 = st_read("../data/FieldPointsShp/FieldPoints2019.shp", "FieldPoints2019")
+fieldpts2020 = st_read("../data/FieldPointsShp/FieldPoints2020.shp", "FieldPoints2020")
+fieldpts2021 = st_read("../data/FieldPointsShp/FieldPoints2021.shp", "FieldPoints2021")
+```
+
+## Raster
+
+```{r eval=FALSE, include=FALSE}
+r2015Q<-rast("../data/rasters/dNBRTest/dnbrQuality2015.tif")
+r2015M<-rast("../data/rasters/dNBRTest/dnbrMedian2015.tif")
+```
+
+```{r}
+r2015Q<-rast("../data/rasters/unburnedTest/unburned_Quality2015.tif")
+r2015M<-rast("../data/rasters/unburnedTest/unburned_Median2015.tif")
+```
+```{r}
+r2015<-rast("../data/rasters/unburned/dnbrUnburned2015.tif")
+r2019<-rast("../data/rasters/unburned/dnbrUnburned2019.tif")
+r2020<-rast("../data/rasters/unburned/dnbrUnburned2020.tif")
+r2021<-rast("../data/rasters/unburned/dnbrUnburned2021.tif")
+```
+
+```{r}
+r2015Q
+r2015M
+```
+
+```{r}
+plot(r2015Q)
+plot(r2015M)
+```
+
+# Raster to points
+```{r}
+r2015Q_pts = as.points(r2015Q, values=TRUE, na.rm=TRUE)
+r2015M_pts = as.points(r2015M, values=TRUE, na.rm=TRUE)
+```
+
+```{r}
+pts2015Q = st_as_sf(r2015Q_pts)
+pts2015M = st_as_sf(r2015M_pts)
+```
+
+```{r}
+unburned2015Q = pts2015Q %>% filter(unburned==1)
+```
+
+```{r}
+unburned2015M = pts2015M  %>% filter(unburned==1)
+```
+
+```{r}
+unburned2015M
+```
+# Distance to unburned
+## Distance to nearest polygon
+```{r}
+test2015Q= fieldpts2015 %>%
+  mutate(nearest = st_nearest_feature(., unburned2015Q)) %>%
+  mutate(dist_m = st_distance(., unburned2015Q[nearest,], by_element=TRUE)) %>%
+  st_drop_geometry(.)
+```
+
+```{r}
+test2015Q
+```
+
+```{r}
+test2015M= fieldpts2015 %>%
+  mutate(nearest = st_nearest_feature(., unburned2015M)) %>%
+  mutate(dist_m = st_distance(., unburned2015M[nearest,], by_element=TRUE)) %>%
+  st_drop_geometry(.)
+```
+
+```{r}
+test2015M
+```

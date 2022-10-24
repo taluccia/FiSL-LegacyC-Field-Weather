@@ -1,0 +1,114 @@
+---
+title: "Field to Spatial Points"
+author: "Anna Talucci"
+date: '2022-10-20'
+output: html_document
+---
+
+# Overview
+
+Take field locations and convert to spatial point in equal area projection and save as shapefile.
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sp)
+library(sf)
+library(ids)
+```
+
+# Data
+
+```{r}
+field = read.csv("../data/field/FiSl_and_LegC_SiteData_FireYr.csv")
+```
+
+```{r}
+head(field)
+```
+
+# Projections
+```{r}
+wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
+```
+
+```{r}
+ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+```
+
+
+# Create spatial points
+```{r}
+coords_df = cbind(field$longitude, field$latitude)
+df_pt <- SpatialPointsDataFrame(coords_df, proj4string = CRS(wgs_proj), data = field)
+```
+
+## Transform from sp to sf
+
+```{r}
+field_pt = st_as_sf(df_pt)
+```
+```{r}
+head(field_pt)
+```
+## Plot points
+```{r}
+plot(st_geometry(field_pt))
+```
+
+# Transform to Equal area projection
+```{r}
+field_pt_ea = st_transform(field_pt, crs = ea_proj)
+```
+
+# Plot points per year
+```{r}
+field_pt_ea %>% filter(fireYear == 2015 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+```{r}
+field_pt_ea %>% filter(fireYear == 2019 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+```{r}
+field_pt_ea %>% filter(fireYear == 2020 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+
+```{r}
+field_pt_ea %>% filter(fireYear == 2021 ) %>%
+  ggplot() + 
+  geom_sf() +
+  coord_sf()
+```
+
+# Split by fire Year
+
+
+```{r}
+field2015 = field_pt_ea %>% filter(fireYear == 2015 )
+field2019 = field_pt_ea %>% filter(fireYear == 2019 )
+field2020 = field_pt_ea %>% filter(fireYear == 2020 )
+field2021 = field_pt_ea %>% filter(fireYear == 2021 )
+```
+
+# Write to shapefile all points
+
+```{r eval=FALSE, include=FALSE}
+st_write(field_pt_ea, "../outputs/FieldPointsShp/FieldPoints.shp", driver="ESRI Shapefile")
+```
+
+# Write to shapefile by year
+```{r eval=FALSE, include=FALSE}
+st_write(field2015, "../outputs/FieldPointsShp/FieldPoints2015.shp", driver="ESRI Shapefile")
+st_write(field2019, "../outputs/FieldPointsShp/FieldPoints2019.shp", driver="ESRI Shapefile")
+st_write(field2020, "../outputs/FieldPointsShp/FieldPoints2020.shp", driver="ESRI Shapefile")
+st_write(field2021, "../outputs/FieldPointsShp/FieldPoints2021.shp", driver="ESRI Shapefile")
+```

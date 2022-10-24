@@ -1,0 +1,45 @@
+---
+title: "Get Climate NA Data"
+author: "Anna Talucci"
+date: '2022-09-27'
+output: html_document
+---
+
+# Overview
+Ended up extracting with the executable on a windows machine
+
+# Fire Years 
+2015 
+2019 
+2020 
+2021
+
+```{r}
+library(ClimateNAr)
+```
+```{r eval=FALSE, include=FALSE}
+setwd("G:/ClimateNA/");getwd() # it must be the home directory of ClimateNA
+```
+
+## Executable
+```{r}
+exe <- "../ClimateNA_v730/ClimateNA_v7.30.exe"
+```
+
+```{r}
+inputFile = '../data/FiSL-LegacyC-2020.csv'
+
+outputFile = '../outputs/FiSL-LegacyC-2020-nornmals.csv'
+
+yearPeriod = '../ClimateNA_v730/Perioddat/Normal_1961_1990.nrm' 
+```
+
+```{r}
+system2(exe,args= c('/Y', yearPeriod, inputFile, outputFile)) 
+```
+
+```{r}
+dat <- read.csv('../outputs/FiSL-LegacyC-2020-nornmals.csv')
+head(dat) 
+```
+
