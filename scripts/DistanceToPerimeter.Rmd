@@ -9,8 +9,8 @@ output: html_document
 
 Distance from field site to perimeter.
 
--- Create spatial point file
--- Measure distance from point to polygon (st_distance or st_nearest maybe?)
+-- To measure the distance to the perimeter polygons need to be converted to line strings
+-- Measure done in eaqual area projection
 
 # Packages
 
@@ -21,59 +21,6 @@ library(sf)
 library(ids)
 ```
 
-# Data
-
-```{r}
-field = read.csv("../data/field/FiSl_and_LegC_SiteData_FireYr.csv")
-```
-
-```{r}
-head(field)
-```
-```{r}
-fires = st_read("../data/firePolygons/AK_CA_firePolygons.shp", "AK_CA_firePolygons")
-```
-
-```{r}
-fires
-```
-```{r}
-head(fires)
-tail(fires)
-```
-```{r}
-plot(st_geometry(fires))
-```
-```{r}
-fires %>% filter(FireYear == 2015 ) %>%
-  ggplot() + 
-  geom_sf() +
-  coord_sf()
-```
-```{r}
-fires %>% filter(FireYear == 2019 ) %>%
-  ggplot() + 
-  geom_sf() +
-  coord_sf()
-```
-```{r}
-fires %>% filter(FireYear == 2020 ) %>%
-  ggplot() + 
-  geom_sf() +
-  coord_sf()
-```
-
-```{r}
-fires %>% filter(FireYear == 2021 ) %>%
-  ggplot() + 
-  geom_sf() +
-  coord_sf()
-```
-# Fire perimeter projection
-```{r}
-st_crs(fires)$proj4string
-st_crs(fires)$epsg
-```
 # Projections
 ```{r}
 wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
@@ -83,84 +30,187 @@ wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
 ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
 ```
 
+azimuthal equidistant
 ```{r}
 proj_aeqd = "+proj=aeqd +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs" 
 ```
 
-# Create spatial points
+# Data
+## Field points by Year
+
 ```{r}
-coords_df = cbind(field$longitude, field$latitude)
-df_pt <- SpatialPointsDataFrame(coords_df, proj4string = CRS(wgs_proj), data = field)
+fieldpts2015 = st_read("../data/FieldPointsShp/FieldPoints2015.shp", "FieldPoints2015")
+fieldpts2019 = st_read("../data/FieldPointsShp/FieldPoints2019.shp", "FieldPoints2019")
+fieldpts2020 = st_read("../data/FieldPointsShp/FieldPoints2020.shp", "FieldPoints2020")
+fieldpts2021 = st_read("../data/FieldPointsShp/FieldPoints2021.shp", "FieldPoints2021")
 ```
 
-## Transform from sp to sf
-
 ```{r}
-field_pt = st_as_sf(df_pt)
+fieldpts2021
 ```
+# Fire perimeters
 ```{r}
-head(field_pt)
-```
-## Plot points
-```{r}
-plot(st_geometry(field_pt))
+fires = st_read("../data/firePolygons/AK_CA_firePolygons.shp", "AK_CA_firePolygons")
 ```
 
-
-
-# Transform to polar azimuthal equidistant projection
 ```{r}
-fires_aeqd = st_transform(fires, crs = proj_aeqd)
-field_aeqd = st_transform(field_pt, crs = proj_aeqd)
+fires
 ```
 
-
 ```{r}
-plot(st_geometry(fires_aeqd))
-plot(st_geometry(field_aeqd), add=T)
+munson2021 = st_read("../data/firePolygons/Munson2021AK/235_Munson_Creek_20210805_1337.shp", "235_Munson_Creek_20210805_1337")
 ```
 
-## Distance to nearest polygon
+# Split fires by year
+
 ```{r}
-test=field_aeqd %>%
-  mutate(nearest = st_nearest_feature(.,fires_aeqd)) %>%
-  mutate(dist_m = st_distance(., fires_aeqd[nearest,], by_element=TRUE)) %>%
+fires2015 = fires %>% filter(FireYear == 2015) 
+fires2019 = fires %>% filter(FireYear == 2019) 
+fires2020 = fires %>% filter(FireYear == 2020)
+fires2021 = fires %>% filter(FireYear == 2021)
+```
+
+# Fires to equal area projection
+```{r}
+fires2015ea = st_transform(fires2015, crs = ea_proj)
+fires2019ea = st_transform(fires2019, crs = ea_proj)
+fires2020ea = st_transform(fires2020, crs = ea_proj)
+fires2021ea = st_transform(fires2021, crs = ea_proj)
+```
+
+```{r}
+munson2021ea = st_transform(munson2021, crs = ea_proj)
+```
+# Check projection
+```{r}
+st_crs(fires2020ea)$proj4string
+st_crs(fires2020ea)$epsg
+
+st_crs(fieldpts2020)$proj4string
+st_crs(fieldpts2020)$epsg
+
+st_crs(munson2021ea)$proj4string
+st_crs(munson2021ea)$epsg
+```
+# Attributes
+```{r}
+head(fires2015ea)
+head(fieldpts2020)
+```
+# plot fire years
+```{r}
+ggplot() + 
+  geom_sf(data = fires2015ea, fill = "#6C7A86", colour="#A9AB9D") +
+  geom_sf(data = fieldpts2015, fill=NA, colour = "#FFFFFF") +
+  coord_sf()
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = fires2019ea, fill = "#6C7A86", colour="#A9AB9D") +
+  geom_sf(data = fieldpts2019, fill=NA, colour = "#FFFFFF") +
+  coord_sf()
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = fires2020ea, fill = "#6C7A86", colour="#A9AB9D") +
+  geom_sf(data = fieldpts2020, fill=NA, colour = "#FFFFFF") +
+  coord_sf()
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = fires2021ea, fill = "#6C7A86", colour="#A9AB9D") +
+  geom_sf(data = fieldpts2021, fill=NA, colour = "#FFFFFF") +
+  coord_sf()
+```
+
+# Process by year
+## 2015
+### Distance to edge
+```{r}
+Fires2015MLS = st_geometry(obj = fires2015ea) %>% st_cast(to = 'MULTILINESTRING')
+```
+```{r}
+edge2015=fieldpts2015 %>%
+  mutate(edge_m = st_distance(., Fires2015MLS, by_element=TRUE)) %>%
+  st_drop_geometry(.)
+```
+```{r}
+edge2015
+```
+### Write to cvs
+```{r}
+write.csv(edge2015,file = "../outputs/EdgeDistance2015.csv")
+```
+
+## 2019
+### Distance to edge
+```{r}
+Fires2019MLS = st_geometry(obj = fires2019ea) %>% st_cast(to = 'MULTILINESTRING')
+```
+```{r}
+edge2019=fieldpts2019 %>%
+  mutate(edge_m = st_distance(., Fires2019MLS, by_element=TRUE)) %>%
+  st_drop_geometry(.)
+```
+```{r}
+edge2019
+```
+### Write to cvs
+```{r}
+write.csv(edge2019,file = "../outputs/EdgeDistance2019.csv")
+```
+
+## 2020
+```{r}
+fieldpts2020
+```
+### Distance to edge
+```{r}
+st_geometry(obj = fires2020ea) %>% st_cast(to = 'MULTILINESTRING') %>% st_distance(y = fieldpts2020)
+```
+
+```{r}
+Fires2020MLS = st_geometry(obj = fires2020ea) %>% st_cast(to = 'MULTILINESTRING')
+```
+```{r}
+edge2020=fieldpts2020 %>%
+  mutate(edge_m = st_distance(., Fires2020MLS, by_element=TRUE)) %>%
   st_drop_geometry(.)
 ```
 
 ```{r}
-min(test$dist_m)
-max(test$dist_m)
-mean(test$dist_m)
-median(test$dist_m)
+edge2020
 ```
+### Write to cvs
 ```{r}
-test
+write.csv(edge2020,file = "../outputs/EdgeDistance2020.csv")
 ```
 
-# Transform to polar azimuthal equidistant projection
+## 2021
 ```{r}
-
-field_albers = st_transform(field_pt, crs = st_crs(fires))
+ggplot() + 
+  geom_sf(data = munson2021ea, fill = "#6C7A86", colour="#A9AB9D")  +
+  coord_sf()
 ```
-
-
+### Distance to edge
 ```{r}
-plot(st_geometry(fires))
-plot(st_geometry(field_albers), add=T)
+Fires2021MLS = st_geometry(obj = fires2021ea) %>% st_cast(to = 'MULTILINESTRING')
 ```
-
-## Distance to nearest polygon
 ```{r}
-test2=field_albers %>%
-  mutate(nearest = st_nearest_feature(.,fires)) %>%
-  mutate(dist_m = st_distance(., fires[nearest,], by_element=TRUE)) %>%
+edge2021=fieldpts2021 %>%
+  mutate(edge_m = st_distance(., Fires2021MLS, by_element=TRUE)) %>%
   st_drop_geometry(.)
 ```
 
 ```{r}
-min(test2$dist_m)
-max(test2$dist_m)
-mean(test2$dist_m)
-median(test2$dist_m)
+edge2021
 ```
+
+### Write to cvs
+```{r}
+write.csv(edge2021,file = "../outputs/EdgeDistance2021.csv")
+```
+
