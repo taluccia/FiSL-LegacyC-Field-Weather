@@ -27,7 +27,20 @@ field = read.csv("../data/field/FiSl_and_LegC_SiteData_FireYr.csv")
 ```{r}
 head(field)
 ```
+# Remove White Space
+```{r}
+field = field %>%
+  mutate(across(where(is.character), str_trim)) %>%
+   mutate(fire_scar = str_replace(fire_scar, "[[:punct:]]", ""))
+```
 
+```{r}
+unique(field$fire_scar)
+```
+```{r}
+field %>% group_by(fireYear) %>% 
+          summarise(fire_scar = unique(fire_scar))
+```
 # Projections
 ```{r}
 wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
@@ -97,6 +110,10 @@ field2015 = field_pt_ea %>% filter(fireYear == 2015 )
 field2019 = field_pt_ea %>% filter(fireYear == 2019 )
 field2020 = field_pt_ea %>% filter(fireYear == 2020 )
 field2021 = field_pt_ea %>% filter(fireYear == 2021 )
+```
+
+```{r}
+unique(field2019$fire_scar)
 ```
 
 # Write to shapefile all points
