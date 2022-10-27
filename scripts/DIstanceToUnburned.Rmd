@@ -36,7 +36,7 @@ ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +da
 # Data
 
 
-## Fire perimeters by Year
+## Field points by Year
 
 ```{r}
 fieldpts2015 = st_read("../data/FieldPointsShp/FieldPoints2015.shp", "FieldPoints2015")
@@ -46,75 +46,139 @@ fieldpts2021 = st_read("../data/FieldPointsShp/FieldPoints2021.shp", "FieldPoint
 ```
 
 ## Raster
+```{r}
+r2015<-rast("../data/rasters/unburnedMedian/unburned_Median2015.tif")
+r2019<-rast("../data/rasters/unburnedMedian/unburned_Median2019.tif")
+r2020<-rast("../data/rasters/unburnedMedian/unburned_Median2020.tif")
+r2021<-rast("../data/rasters/unburnedMedian/unburned_Median2021.tif")
+```
 
 ```{r eval=FALSE, include=FALSE}
-r2015Q<-rast("../data/rasters/dNBRTest/dnbrQuality2015.tif")
-r2015M<-rast("../data/rasters/dNBRTest/dnbrMedian2015.tif")
+r2015
+r2019
+r2020
+r2021
 ```
 
-```{r}
-r2015Q<-rast("../data/rasters/unburnedTest/unburned_Quality2015.tif")
-r2015M<-rast("../data/rasters/unburnedTest/unburned_Median2015.tif")
-```
-```{r}
-r2015<-rast("../data/rasters/unburned/dnbrUnburned2015.tif")
-r2019<-rast("../data/rasters/unburned/dnbrUnburned2019.tif")
-r2020<-rast("../data/rasters/unburned/dnbrUnburned2020.tif")
-r2021<-rast("../data/rasters/unburned/dnbrUnburned2021.tif")
+```{r eval=FALSE, include=FALSE}
+plot(r2015)
+plot(r2019)
 ```
 
+# Process by year
+
+## 2015 
+### Raster to points
 ```{r}
-r2015Q
-r2015M
+r2015_pts = as.points(r2015, values=TRUE, na.rm=TRUE)
 ```
 
+### Make into sf object
 ```{r}
-plot(r2015Q)
-plot(r2015M)
+pts2015 = st_as_sf(r2015_pts)
 ```
 
-# Raster to points
+### Filter for unburned
 ```{r}
-r2015Q_pts = as.points(r2015Q, values=TRUE, na.rm=TRUE)
-r2015M_pts = as.points(r2015M, values=TRUE, na.rm=TRUE)
+unburned2015 = pts2015 %>% filter(unburned==1)
 ```
 
+### Distance to nearest unburned point
 ```{r}
-pts2015Q = st_as_sf(r2015Q_pts)
-pts2015M = st_as_sf(r2015M_pts)
+dist2015= fieldpts2015 %>%
+  mutate(nearest = st_nearest_feature(., unburned2015)) %>%
+  mutate(dist_m = st_distance(., unburned2015[nearest,], by_element=TRUE)) %>%
+  st_drop_geometry(.) 
 ```
 
+### Write to cvs
 ```{r}
-unburned2015Q = pts2015Q %>% filter(unburned==1)
+write.csv(dist2015,file = "../outputs/UnburnedDistance2015.csv")
 ```
 
+## 2019 
+### Raster to points
 ```{r}
-unburned2015M = pts2015M  %>% filter(unburned==1)
+r2019_pts = as.points(r2019, values=TRUE, na.rm=TRUE)
 ```
 
+### Make into sf object
 ```{r}
-unburned2015M
+pts2019 = st_as_sf(r2019_pts)
 ```
-# Distance to unburned
-## Distance to nearest polygon
+
+### Filter for unburned
 ```{r}
-test2015Q= fieldpts2015 %>%
-  mutate(nearest = st_nearest_feature(., unburned2015Q)) %>%
-  mutate(dist_m = st_distance(., unburned2015Q[nearest,], by_element=TRUE)) %>%
+unburned2019 = pts2019  %>% filter(unburned==1)
+```
+
+### Distance to nearest unburned point
+```{r}
+dist2019= fieldpts2019 %>%
+  mutate(nearest = st_nearest_feature(., unburned2019)) %>%
+  mutate(dist_m = st_distance(., unburned2019[nearest,], by_element=TRUE)) %>%
   st_drop_geometry(.)
 ```
 
+### Write to cvs
 ```{r}
-test2015Q
+write.csv(dist2019,file = "../outputs/UnburnedDistance2019.csv")
+```
+## 2020 
+### Raster to points
+```{r}
+r2020_pts = as.points(r2020, values=TRUE, na.rm=TRUE)
 ```
 
+### Make into sf object
 ```{r}
-test2015M= fieldpts2015 %>%
-  mutate(nearest = st_nearest_feature(., unburned2015M)) %>%
-  mutate(dist_m = st_distance(., unburned2015M[nearest,], by_element=TRUE)) %>%
+pts2020 = st_as_sf(r2020_pts)
+```
+
+### Filter for unburned
+```{r}
+unburned2020 = pts2020  %>% filter(unburned==1)
+```
+
+### Distance to nearest unburned point
+```{r}
+dist2020= fieldpts2020 %>%
+  mutate(nearest = st_nearest_feature(., unburned2020)) %>%
+  mutate(dist_m = st_distance(., unburned2020[nearest,], by_element=TRUE)) %>%
   st_drop_geometry(.)
 ```
 
+### Write to cvs
 ```{r}
-test2015M
+write.csv(dist2020,file = "../outputs/UnburnedDistance2020.csv")
+```
+
+
+## 2021 
+### Raster to points
+```{r}
+r2021_pts = as.points(r2021, values=TRUE, na.rm=TRUE)
+```
+
+### Make into sf object
+```{r}
+pts2021 = st_as_sf(r2021_pts)
+```
+
+### Filter for unburned
+```{r}
+unburned2021 = pts2021  %>% filter(unburned==1)
+```
+
+### Distance to nearest unburned point
+```{r}
+dist2021= fieldpts2021 %>%
+  mutate(nearest = st_nearest_feature(., unburned2021)) %>%
+  mutate(dist_m = st_distance(., unburned2021[nearest,], by_element=TRUE)) %>%
+  st_drop_geometry(.)
+```
+
+### Write to cvs
+```{r}
+write.csv(dist2021,file = "../outputs/UnburnedDistance2021.csv")
 ```
