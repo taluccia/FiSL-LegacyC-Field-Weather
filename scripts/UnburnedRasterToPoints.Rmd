@@ -1,0 +1,161 @@
+---
+title: "Unburned Raster to Points"
+output: html_document
+---
+
+# Overview
+Take unburned raster from GEE output, and convert to point shapefile. Processed in Equal area projection.
+
+# Packages
+```{r}
+library(tidyverse)
+library(sp)
+library(sf)
+library(ids)
+library(terra)
+library(gdalUtilities)
+library(ids)
+```
+# Projections
+```{r}
+wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
+```
+
+```{r}
+ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+```
+
+# Data
+
+## Raster
+```{r}
+r2015<-rast("../data/rasters/unburnedMedian/unburned_Median2015.tif")
+r2019<-rast("../data/rasters/unburnedMedian/unburned_Median2019.tif")
+r2020<-rast("../data/rasters/unburnedMedian/unburned_Median2020.tif")
+r2021<-rast("../data/rasters/unburnedMedian/unburned_Median2021.tif")
+```
+
+```{r eval=FALSE, include=FALSE}
+r2015
+r2019
+r2020
+r2021
+```
+
+```{r eval=FALSE, include=FALSE}
+plot(r2015)
+plot(r2019)
+```
+
+
+# Raster to points by year
+
+## 2015 Raster to points
+```{r}
+r2015_pts = as.points(r2015, values=TRUE, na.rm=TRUE)
+```
+
+### Make into sf object
+```{r}
+pts2015 = st_as_sf(r2015_pts)
+```
+
+### Filter for unburned and add unique id
+```{r}
+set.seed(10)
+unburned2015 = pts2015 %>% 
+  filter(unburned==1) %>% 
+  mutate(UniqueId = random_id(n= 205148, bytes = 4)) %>%
+  dplyr::select(UniqueId, unburned, geometry)
+```
+
+```{r}
+unburned2015
+```
+
+
+### Write to shapefile all points
+
+```{r eval=FALSE, include=FALSE}
+st_write(unburned2015, "../outputs/UnburnedPoints/UnburnedPoints2015.shp", driver="ESRI Shapefile")
+```
+
+
+## 2019 Raster to points
+```{r}
+r2019_pts = as.points(r2019, values=TRUE, na.rm=TRUE)
+```
+
+### Make into sf object
+```{r}
+pts2019 = st_as_sf(r2019_pts)
+```
+
+### Filter for unburned
+```{r}
+unburned2019 = pts2019  %>% 
+  filter(unburned==1)
+```
+
+%>% 
+  mutate(UniqueId = random_id(n= 205148, bytes = 4)) %>%
+  dplyr::select(UniqueId, unburned, geometry)
+### Write to shapefile all points
+
+```{r eval=FALSE, include=FALSE}
+st_write(unburned2019, "../outputs/UnburnedPoints/UnburnedPoints2019.shp", driver="ESRI Shapefile")
+```
+
+## 2020 Raster to points
+```{r}
+r2020_pts = as.points(r2020, values=TRUE, na.rm=TRUE)
+```
+
+### Make into sf object
+```{r}
+pts2020 = st_as_sf(r2020_pts)
+```
+
+### Filter for unburned
+```{r}
+unburned2020 = pts2020  %>% 
+  filter(unburned==1) %>% 
+  mutate(UniqueId = random_id(n= 2310, bytes = 4)) %>%
+  dplyr::select(UniqueId, unburned, geometry)
+```
+
+```{r}
+unburned2020
+```
+### Write to shapefile all points
+
+```{r eval=FALSE, include=FALSE}
+st_write(unburned2020, "../outputs/UnburnedPoints/UnburnedPoints2020.shp", driver="ESRI Shapefile")
+```
+
+## 2021 Raster to points
+```{r}
+r2021_pts = as.points(r2021, values=TRUE, na.rm=TRUE)
+```
+
+### Make into sf object
+```{r}
+pts2021 = st_as_sf(r2021_pts)
+```
+
+### Filter for unburned
+```{r}
+unburned2021 = pts2021  %>% 
+  filter(unburned==1)%>% 
+  mutate(UniqueId = random_id(n= 33486, bytes = 4)) %>%
+  dplyr::select(UniqueId, unburned, geometry)
+```
+
+```{r}
+unburned2021
+```
+### Write to shapefile all points
+
+```{r eval=FALSE, include=FALSE}
+st_write(unburned2021, "../outputs/UnburnedPoints/UnburnedPoints2021.shp", driver="ESRI Shapefile")
+```
