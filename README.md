@@ -7,7 +7,6 @@ Fire year     | Field fire scar name    | Official fire Name or ID
 ------------- | ----------------------- | ------------------------ 
 2015	        | Aggie			              | Aggie Creek
 2015	        | Manley			            | Baker
-2015	        | Mt. Prindle 1			
 2015	        | Mt Prindle 1			
 2015	        | Tanana Road			        | Hay Slough
 2019	        | Livengood	              | Hess Creek		
