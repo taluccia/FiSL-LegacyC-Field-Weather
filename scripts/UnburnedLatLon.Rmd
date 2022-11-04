@@ -1,0 +1,135 @@
+---
+title: "Unburned lat Lon"
+author: "Anna Talucci"
+date: '2022-11-03'
+output: html_document
+---
+
+# Overview
+Take unburned raster from GEE output, and convert to point shapefile. Processed in Equal area projection.
+
+# Packages
+```{r}
+library(tidyverse)
+library(sp)
+library(sf)
+library(ids)
+library(terra)
+library(gdalUtilities)
+library(ids)
+```
+# Projections
+```{r}
+wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
+```
+
+```{r}
+ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+```
+
+# Data
+
+## Raster
+```{r}
+lat2015<-rast("../data/rasters/UnburnedLatLon/Lat2015.tif")
+lon2015<-rast("../data/rasters/UnburnedLatLon/Lon2015.tif")
+```
+
+```{r}
+lat2019<-rast("../data/rasters/UnburnedLatLon/Lat2019.tif")
+lon2019<-rast("../data/rasters/UnburnedLatLon/Lon2019.tif")
+```
+
+```{r}
+lat2020<-rast("../data/rasters/UnburnedLatLon/Lat2020.tif")
+lon2020<-rast("../data/rasters/UnburnedLatLon/Lon2020.tif")
+```
+
+```{r}
+lat2021<-rast("../data/rasters/UnburnedLatLon/Lat2021.tif")
+lon2021<-rast("../data/rasters/UnburnedLatLon/Lon2021.tif")
+```
+
+## Unburned points
+```{r}
+unburned2015 = st_read("../data/UnburnedPoints/UnburnedPoints2015.shp", "UnburnedPoints2015")
+unburned2019 = st_read("../data/UnburnedPoints/UnburnedPoints2019.shp", "UnburnedPoints2019")
+unburned2020 = st_read("../data/UnburnedPoints/UnburnedPoints2020.shp", "UnburnedPoints2020")
+unburned2021 = st_read("../data/UnburnedPoints/UnburnedPoints2021.shp", "UnburnedPoints2021")
+```
+
+## Inspect raster data
+```{r}
+lat2021
+lon2021
+```
+## CRS
+```{r}
+crs(lat2021, proj=TRUE)
+```
+
+```{r}
+st_crs(unburned2021)$proj4string
+```
+# Visualize
+```{r}
+plot(lat2021)
+plot(unburned2021, add=TRUE)
+```
+
+# stack
+```{r}
+rlatlon2015 <- list(lat2015, lon2015)
+```
+
+# Add Lat/Lon as attributes to points
+## 2015
+```{r}
+lonValue2015=extract(lon2015, unburned2015)
+latValue2015=extract(lat2015, unburned2015)
+```
+
+```{r}
+combinePointValue2015=cbind(unburned2015, latValue2015, lonValue2015)
+ptLatLon2015 = combinePointValue2015 %>% dplyr::select(-ID, -ID.1)
+```
+
+## 2019
+```{r}
+lonValue2019=extract(lon2019, unburned2019)
+latValue2019=extract(lat2019, unburned2019)
+```
+
+```{r}
+combinePointValue2019=cbind(unburned2019, latValue2019, lonValue2019)
+ptLatLon2019 = combinePointValue2019 %>% dplyr::select(-ID, -ID.1)
+```
+
+## 2020
+```{r}
+lonValue2020=extract(lon2020, unburned2020)
+latValue2020=extract(lat2020, unburned2020)
+```
+
+```{r}
+combinePointValue2020=cbind(unburned2020, latValue2020, lonValue2020)
+ptLatLon2020 = combinePointValue2020 %>% dplyr::select(-ID, -ID.1)
+```
+
+## 2021
+```{r}
+lonValue2021=extract(lon2021, unburned2021)
+latValue2021=extract(lat2021, unburned2021)
+```
+
+```{r}
+combinePointValue2021=cbind(unburned2021, latValue2021, lonValue2021)
+ptLatLon2021 = combinePointValue2021 %>% dplyr::select(-ID, -ID.1)
+```
+# save 
+```{r eval=FALSE, include=FALSE}
+st_write(ptLatLon2015, "../outputs/UnburnedPoints/UnburnedPtsLatLon2015.shp", driver="ESRI Shapefile")
+st_write(ptLatLon2019, "../outputs/UnburnedPoints/UnburnedPtsLatLon2019.shp", driver="ESRI Shapefile")
+st_write(ptLatLon2020, "../outputs/UnburnedPoints/UnburnedPtsLatLon2020.shp", driver="ESRI Shapefile")
+st_write(ptLatLon2021, "../outputs/UnburnedPoints/UnburnedPtsLatLon2021.shp", driver="ESRI Shapefile")
+```
