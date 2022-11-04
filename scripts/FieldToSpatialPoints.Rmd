@@ -24,9 +24,11 @@ library(ids)
 field = read.csv("../data/field/FiSl_and_LegC_SiteData_FireYr.csv")
 ```
 
+
 ```{r}
-head(field)
+field
 ```
+
 # Remove White Space
 ```{r}
 field = field %>%
@@ -41,6 +43,17 @@ unique(field$fire_scar)
 field %>% group_by(fireYear) %>% 
           summarise(fire_scar = unique(fire_scar))
 ```
+
+
+
+```{r eval=FALSE, include=FALSE}
+field2_fy = field2 %>%
+  mutate(FireYr = ifelse(fire_scar %in% c("Aggie", "Manley", "MtPrindle1", "TananaRoad"), "2015",
+                  ifelse(fire_scar %in% c("Isom"), "2020",
+                                            ifelse(fire_scar %in% c("Chena"), "2021", "2019")))) %>%
+  dplyr::select(project, FireYr, fire_scar:moisture_class)
+```
+
 # Projections
 ```{r}
 wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
@@ -50,7 +63,6 @@ wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
 ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
 ```
 
-
 # Create spatial points
 ```{r}
 coords_df = cbind(field$longitude, field$latitude)
@@ -58,16 +70,21 @@ df_pt <- SpatialPointsDataFrame(coords_df, proj4string = CRS(wgs_proj), data = f
 ```
 
 ## Transform from sp to sf
-
 ```{r}
 field_pt = st_as_sf(df_pt)
 ```
+
 ```{r}
 head(field_pt)
 ```
+
 ## Plot points
 ```{r}
 plot(st_geometry(field_pt))
+```
+
+```{r}
+plot(st_geometry(field_pt2))
 ```
 
 # Transform to Equal area projection
@@ -75,7 +92,8 @@ plot(st_geometry(field_pt))
 field_pt_ea = st_transform(field_pt, crs = ea_proj)
 ```
 
-# Plot points per year
+
+# Plot points per year original
 ```{r}
 field_pt_ea %>% filter(fireYear == 2015 ) %>%
   ggplot() + 
@@ -102,15 +120,16 @@ field_pt_ea %>% filter(fireYear == 2021 ) %>%
   coord_sf()
 ```
 
+
 # Split by fire Year
-
-
 ```{r}
 field2015 = field_pt_ea %>% filter(fireYear == 2015 )
 field2019 = field_pt_ea %>% filter(fireYear == 2019 )
 field2020 = field_pt_ea %>% filter(fireYear == 2020 )
 field2021 = field_pt_ea %>% filter(fireYear == 2021 )
 ```
+
+
 
 ```{r}
 unique(field2019$fire_scar)
@@ -129,3 +148,4 @@ st_write(field2019, "../outputs/FieldPointsShp/FieldPoints2019.shp", driver="ESR
 st_write(field2020, "../outputs/FieldPointsShp/FieldPoints2020.shp", driver="ESRI Shapefile")
 st_write(field2021, "../outputs/FieldPointsShp/FieldPoints2021.shp", driver="ESRI Shapefile")
 ```
+
