@@ -1,0 +1,652 @@
+---
+title: "PerimeterToPointsPlusLatLon"
+author: "Anna Talucci"
+date: '2022-11-07'
+output: html_document
+---
+
+# Overview
+
+Convert perimeter (polygon) to points add lat lon coords for each point
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sp)
+library(sf)
+library(ids)
+library(units)
+library(geosphere)
+```
+
+# Projections
+```{r}
+wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
+```
+
+```{r}
+ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+```
+
+
+
+# Data
+## Raster
+```{r}
+lat2015<-rast("../data/rasters/UnburnedLatLon/Lat2015.tif")
+lon2015<-rast("../data/rasters/UnburnedLatLon/Lon2015.tif")
+```
+
+```{r}
+lat2019<-rast("../data/rasters/UnburnedLatLon/Lat2019.tif")
+lon2019<-rast("../data/rasters/UnburnedLatLon/Lon2019.tif")
+```
+
+```{r}
+lat2020<-rast("../data/rasters/UnburnedLatLon/Lat2020.tif")
+lon2020<-rast("../data/rasters/UnburnedLatLon/Lon2020.tif")
+```
+
+```{r}
+lat2021<-rast("../data/rasters/UnburnedLatLon/Lat2021.tif")
+lon2021<-rast("../data/rasters/UnburnedLatLon/Lon2021.tif")
+```
+
+
+
+# 2015 
+## Aggie
+### Data
+```{r}
+aggie2015 = st_read("../data/firePerimeters/AggieCreek2015AK/515_Aggie_Creek_20150721_0500.shp", "515_Aggie_Creek_20150721_0500")
+```
+
+### Transform to Equal area projection
+```{r}
+aggie2015ea = st_transform(aggie2015, crs = ea_proj)
+```
+
+### Convert to points
+
+```{r}
+fireaggie2015 = 
+  st_geometry(obj = aggie2015ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+
+```{r}
+aggielonValue2015=extract(lon2015, fireaggie2015)
+aggielatValue2015=extract(lat2015, fireaggie2015)
+```
+
+
+### Combine & add fire name and year
+```{r}
+combineaggie2015=cbind(fireaggie2015, aggielatValue2015, aggielonValue2015)
+aggieptLatLon2015 = combineaggie2015 %>% 
+  mutate(FireYr = aggie2015$FIREYEAR) %>%
+  mutate(offcl__ = aggie2015$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(aggieptLatLon2015, "../outputs/PerimeterPoints/AggiePtsLatLon2015.shp", driver="ESRI Shapefile")
+```
+
+## Baker
+### Data
+```{r}
+baker2015 = st_read("../data/firePerimeters/Baker2015AK/456_Baker_20150724_1630.shp", "456_Baker_20150724_1630")
+```
+
+### Transform to Equal area projection
+```{r}
+baker2015ea = st_transform(baker2015, crs = ea_proj)
+```
+
+### Convert to points
+
+```{r}
+firebaker2015 = 
+  st_geometry(obj = baker2015ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+
+```{r}
+bakerlonValue2015=extract(lon2015, firebaker2015)
+bakerlatValue2015=extract(lat2015, firebaker2015)
+```
+
+
+### Combine & add fire name and year
+```{r}
+combinebaker2015=cbind(firebaker2015, bakerlatValue2015, bakerlonValue2015)
+bakerptLatLon2015 = combinebaker2015 %>% 
+  mutate(FireYr = baker2015$FIREYEAR) %>%
+  mutate(offcl__ = baker2015$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(bakerptLatLon2015, "../outputs/PerimeterPoints/BakerPtsLatLon2015.shp", driver="ESRI Shapefile")
+```
+
+## US Creek
+### Data
+```{r}
+uscreek2015 = st_read("../data/firePerimeters/USCreek2015AK/531_U__S__Creek_20150804_1400.shp", "531_U__S__Creek_20150804_1400")
+```
+
+### Transform to Equal area projection
+```{r}
+uscreek2015ea = st_transform(uscreek2015, crs = ea_proj)
+```
+
+### Convert to points
+
+```{r}
+fireuscreek2015 = 
+  st_geometry(obj = uscreek2015ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+
+```{r}
+uscreeklonValue2015=extract(lon2015, fireuscreek2015)
+uscreeklatValue2015=extract(lat2015, fireuscreek2015)
+```
+
+
+### Combine & add fire name and year
+```{r}
+combineuscreek2015=cbind(fireuscreek2015, uscreeklatValue2015, uscreeklonValue2015)
+uscreekptLatLon2015 = combineuscreek2015 %>% 
+  mutate(FireYr = uscreek2015$FIREYEAR) %>%
+  mutate(offcl__ = uscreek2015$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(uscreekptLatLon2015, "../outputs/PerimeterPoints/USCreekPtsLatLon2015.shp", driver="ESRI Shapefile")
+```
+
+# 2019
+## Bear 
+### Data
+
+```{r}
+bearnose2019 = st_read("../data/firePerimeters/BearnoseHill2019AK/407_Bearnose_Hill__20190905_1400.shp", "407_Bearnose_Hill__20190905_1400")
+```
+### Transform to Equal area projection
+```{r}
+bearnose2019ea = st_transform(bearnose2019, crs = ea_proj)
+```
+
+### Convert to points
+```{r}
+firebear2019 = 
+  st_geometry(obj = bearnose2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+```{r}
+bearlonValue2019=extract(lon2019, firebear2019)
+bearlatValue2019=extract(lat2019, firebear2019)
+```
+
+### Combine & add fire name and year
+```{r}
+combineBear2019=cbind(firebear2019, bearlatValue2019, bearlonValue2019)
+bearptLatLon2019 = combineBear2019 %>% 
+  mutate(FireYr = bearnose2019$FIREYEAR) %>%
+  mutate(offcl__ = bearnose2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(bearptLatLon2019, "../outputs/PerimeterPoints/BearPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+## Cripple
+### Data
+```{r}
+cripple2019 = st_read("../data/firePerimeters/CrippleCreek2019AK/201_Cripple_Creek_20190622_1337.shp", "201_Cripple_Creek_20190622_1337")
+```
+### Transform to Equal area projection
+```{r}
+cripple2019ea = st_transform(cripple2019, crs = ea_proj)
+```
+
+### Convert to points
+```{r}
+firecripple2019 = 
+  st_geometry(obj = cripple2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+```{r}
+cripplelonValue2019=extract(lon2019, firecripple2019)
+cripplelatValue2019=extract(lat2019, firecripple2019)
+```
+
+### Combine & add fire name and year
+```{r}
+combinecripple2019=cbind(firecripple2019, cripplelatValue2019, cripplelonValue2019)
+crippleptLatLon2019 = combinecripple2019 %>% 
+  mutate(FireYr = cripple2019$FIREYEAR) %>%
+  mutate(offcl__ = cripple2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(crippleptLatLon2019, "../outputs/PerimeterPoints/CripplePtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+## Frozen Calf
+### Data
+```{r}
+frozen2019 = st_read("../data/firePerimeters/FrozenCalf2019AK/367_Frozen_Calf__20190909_1300.shp", "367_Frozen_Calf__20190909_1300")
+```
+
+### Transform to Equal area projection
+```{r}
+frozen2019ea = st_transform(frozen2019 , crs = ea_proj)
+```
+
+### Convert to points
+```{r}
+firefrozen2019 = 
+  st_geometry(obj = frozen2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+```{r}
+frozenlonValue2019=extract(lon2019, firefrozen2019)
+frozenlatValue2019=extract(lat2019, firefrozen2019)
+```
+
+### Combine & add fire name and year
+```{r}
+combinefrozen2019=cbind(firefrozen2019, frozenlatValue2019, frozenlonValue2019)
+frozenptLatLon2019 = combinefrozen2019 %>% 
+  mutate(FireYr = frozen2019$FIREYEAR) %>%
+  mutate(offcl__ = frozen2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(frozenptLatLon2019, "../outputs/PerimeterPoints/frozenPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+
+## Hess Creak
+### Data
+
+```{r}
+hess2019 = st_read("../data/firePerimeters/HessCreek2019AK/324_Hess_Creek_20190831_1400.shp", "324_Hess_Creek_20190831_1400")
+```
+
+### Transform to Equal area projection
+```{r}
+hess2019ea = st_transform(hess2019, crs = ea_proj)
+```
+
+### Convert to points
+```{r}
+firehess2019 = 
+  st_geometry(obj = hess2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+```{r}
+hesslonValue2019=extract(lon2019, firehess2019)
+hesslatValue2019=extract(lat2019, firehess2019)
+```
+
+### Combine & add fire name and year
+```{r}
+combinehess2019=cbind(firehess2019, hesslatValue2019, hesslonValue2019)
+hessptLatLon2019 = combinehess2019 %>% 
+  mutate(FireYr = hess2019$FIREYEAR) %>%
+  mutate(offcl__ = hess2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(hessptLatLon2019, "../outputs/PerimeterPoints/HessPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+## Marr
+###Data
+```{r}
+marr2019 = st_read("../data/firePerimeters/Marr2019AK/212_Marr_20190831_1400.shp", "212_Marr_20190831_1400")
+```
+
+### Transform to Equal area projection
+```{r}
+marr2019ea = st_transform(marr2019, crs = ea_proj)
+```
+
+### Convert to points
+```{r}
+firemarr2019 = 
+  st_geometry(obj = marr2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+```{r}
+marrlonValue2019=extract(lon2019, firemarr2019)
+marrlatValue2019=extract(lat2019, firemarr2019)
+```
+
+### Combine & add fire name and year
+```{r}
+combinemarr2019=cbind(firemarr2019, marrlatValue2019, marrlonValue2019)
+marrptLatLon2019 = combinemarr2019 %>% 
+  mutate(FireYr = marr2019$FIREYEAR) %>%
+  mutate(offcl__ = marr2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(marrptLatLon2019, "../outputs/PerimeterPoints/MarrPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+## Preach
+### Data
+```{r}
+preach2019 = st_read("../data/firePerimeters/PreacherCreek2019AK/567_Preacher_Creek_20190818_1400.shp", "567_Preacher_Creek_20190818_1400")
+```
+
+### Transform to Equal area projection
+```{r}
+preach2019ea = st_transform(preach2019, crs = ea_proj)
+```
+
+### Convert to points
+```{r}
+firepreach2019 = 
+  st_geometry(obj = preach2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+```{r}
+preachlonValue2019=extract(lon2019, firepreach2019)
+preachlatValue2019=extract(lat2019, firepreach2019)
+```
+
+### Combine & add fire name and year
+```{r}
+combinepreach2019=cbind(firepreach2019, preachlatValue2019, preachlonValue2019)
+preachptLatLon2019 = combinepreach2019 %>% 
+  mutate(FireYr = preach2019$FIREYEAR) %>%
+  mutate(offcl__ = preach2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(preachptLatLon2019, "../outputs/PerimeterPoints/PreachPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+
+## Shovel
+### Data
+
+```{r}
+shovel2019 = st_read("../data/firePerimeters/ShovelCreek2019AK/319_Shovel_Creek_20190730_1500.shp", "319_Shovel_Creek_20190730_1500")
+```
+
+### Transform to Equal area projection
+```{r}
+shovel2019ea = st_transform(shovel2019, crs = ea_proj)
+```
+
+### Convert to points
+```{r}
+fireshovel2019 = 
+  st_geometry(obj = shovel2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+```{r}
+shovellonValue2019=extract(lon2019, fireshovel2019)
+shovellatValue2019=extract(lat2019, fireshovel2019)
+```
+
+### Combine & add fire name and year
+```{r}
+combineshovel2019=cbind(fireshovel2019, shovellatValue2019, shovellonValue2019)
+shovelptLatLon2019 = combineshovel2019 %>% 
+  mutate(FireYr = shovel2019$FIREYEAR) %>%
+  mutate(offcl__ = shovel2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(shovelptLatLon2019, "../outputs/PerimeterPoints/ShovelPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+
+## Tractor Trail 2
+### Data
+```{r}
+tractor2019 = st_read("../data/firePerimeters/TractorTrail22019AK/348_Tractor_Trail_2_20190831_1400.shp", "348_Tractor_Trail_2_20190831_1400")
+```
+
+### Transform to Equal area projection
+```{r}
+tractor2019ea = st_transform(tractor2019, crs = ea_proj)
+```
+
+### Convert to points
+
+```{r}
+firetractor2019 = 
+  st_geometry(obj = tractor2019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+
+```{r}
+tractorlonValue2019=extract(lon2019, firetractor2019)
+tractorlatValue2019=extract(lat2019, firetractor2019)
+```
+
+
+### Combine & add fire name and year
+```{r}
+combinetractor2019=cbind(firetractor2019, tractorlatValue2019, tractorlonValue2019)
+tractorptLatLon2019 = combinetractor2019 %>% 
+  mutate(FireYr = tractor2019$FIREYEAR) %>%
+  mutate(offcl__ = tractor2019$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(tractorptLatLon2019, "../outputs/PerimeterPoints/TractorPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+
+# 2020
+## Individual Fire perimeters
+```{r}
+isom2020 = st_read("../data/firePerimeters/Isom2020AK/187_Isom_Creek_20200705_1700.shp", "187_Isom_Creek_20200705_1700")
+```
+
+
+## Transform to Equal area projection
+```{r}
+isom2020ea = st_transform(isom2020, crs = ea_proj)
+```
+
+## Convert to points
+```{r}
+fireisom2020 = 
+  st_geometry(obj = isom2020ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+## Extract Lat/Lon
+```{r}
+lonValue2020=extract(lon2020, fireisom2020)
+latValue2020=extract(lat2020, fireisom2020)
+```
+
+## Combine & add fire name and year
+```{r}
+combinePointValue2020=cbind(fireisom2020, latValue2020, lonValue2020)
+ptLatLon2020 = combinePointValue2020 %>% 
+  mutate(FireYr = isom2020$FIREYEAR) %>%
+  mutate(offcl__ = isom2020$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+```{r}
+ptLatLon2020
+```
+
+## save 
+```{r eval=FALSE, include=FALSE}
+st_write(ptLatLon2020, "../outputs/PerimeterPoints/IsomPtsLatLon2020.shp", driver="ESRI Shapefile")
+```
+
+# 2021
+## Individual Fire perimeters
+```{r}
+munson2021 = st_read("../data/firePerimeters/Munson2021AK/235_Munson_Creek_20210805_1337.shp", "235_Munson_Creek_20210805_1337")
+```
+
+## Transform to Equal area projection
+```{r}
+munson2021ea = st_transform(munson2021, crs = ea_proj)
+```
+
+## Check projection
+```{r}
+st_crs(munson2021ea)$proj4string
+st_crs(munson2021ea)$epsg
+```
+## Check CRS
+```{r}
+crs(lat2021, proj=TRUE)
+```
+
+## Convert to points
+```{r}
+fireMunson2021 = 
+  st_geometry(obj = fires2021ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+## Extract Lat/Lon
+```{r}
+lonValue2021=extract(lon2021, fireMunson2021)
+latValue2021=extract(lat2021, fireMunson2021)
+```
+
+## Combine & add fire name and year
+```{r}
+combinePointValue2021=cbind(fireMunson2021, latValue2021, lonValue2021)
+ptLatLon2021 = combinePointValue2021 %>% 
+  mutate(FireYr = munson2021$FIREYEAR) %>%
+  mutate(offcl__ = munson2021$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+```{r}
+ptLatLon2021
+```
+
+## save 
+```{r eval=FALSE, include=FALSE}
+st_write(ptLatLon2021, "../outputs/PerimeterPoints/MunsonPtsLatLon2021.shp", driver="ESRI Shapefile")
+```
