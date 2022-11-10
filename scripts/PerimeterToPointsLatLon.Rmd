@@ -148,6 +148,53 @@ bakerptLatLon2015 = combinebaker2015 %>%
 st_write(bakerptLatLon2015, "../outputs/PerimeterPoints/BakerPtsLatLon2015.shp", driver="ESRI Shapefile")
 ```
 
+## Hay
+### Data
+```{r}
+hay2015 = st_read("../data/firePerimeters/Hay2015AK/446_Hay_Slough_20150815_1400.shp", "446_Hay_Slough_20150815_1400")
+```
+
+### Transform to Equal area projection
+```{r}
+hay2015ea = st_transform(hay2015, crs = ea_proj)
+```
+
+### Convert to points
+
+```{r}
+firehay2015 = 
+  st_geometry(obj = hay2015ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+
+```{r}
+haylonValue2015=extract(lon2015, firehay2015)
+haylatValue2015=extract(lat2015, firehay2015)
+```
+
+
+### Combine & add fire name and year
+```{r}
+combinehay2015=cbind(firehay2015, haylatValue2015, haylonValue2015)
+hayptLatLon2015 = combinehay2015 %>% 
+  mutate(FireYr = hay2015$FIREYEAR) %>%
+  mutate(offcl__ = hay2015$NAME) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(hayptLatLon2015, "../outputs/PerimeterPoints/HayPtsLatLon2015.shp", driver="ESRI Shapefile")
+```
+
+
 ## US Creek
 ### Data
 ```{r}
@@ -544,6 +591,82 @@ tractorptLatLon2019 = combinetractor2019 %>%
 ### save 
 ```{r}
 st_write(tractorptLatLon2019, "../outputs/PerimeterPoints/TractorPtsLatLon2019.shp", driver="ESRI Shapefile")
+```
+## Canada 
+Canada FireID = 2019BC005
+Canada FireID = 2019MA014
+### Data
+```{r}
+Canada2019 = st_read("../data/firePolygons/AK_CA_firePolygons.shp", "AK_CA_firePolygons")
+```
+
+```{r}
+BC0052019 = Canada2019 %>% filter(FIRE_ID=="2019BC005")
+MA0142019 = Canada2019 %>% filter(FIRE_ID=="2019MA014")
+```
+### Transform to Equal area projection
+```{r}
+BC0052019ea = st_transform(BC0052019, crs = ea_proj)
+MA0142019ea = st_transform(MA0142019, crs = ea_proj)
+```
+
+```{r}
+BC0052019ea 
+MA0142019ea
+```
+### Convert to points
+```{r}
+fireBC0052019 = 
+  st_geometry(obj = BC0052019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+```{r}
+fireMA0142019 = 
+  st_geometry(obj = MA0142019ea) %>% 
+  st_cast(to = 'MULTILINESTRING') %>% 
+  st_cast(to = 'LINESTRING') %>% 
+  st_cast(to = 'MULTIPOINT') %>% 
+  st_cast(to = 'POINT') %>%
+  st_as_sf(.) %>%
+  st_zm(., drop = TRUE)
+```
+
+### Extract Lat/Lon
+
+```{r}
+BC005lonValue2019=extract(lon2019, fireBC0052019)
+BC005latValue2019=extract(lat2019, fireBC0052019)
+MA014lonValue2019=extract(lon2019, fireMA0142019)
+MA014latValue2019=extract(lat2019, fireMA0142019)
+```
+
+
+### Combine & add fire name and year
+```{r}
+combineBC0052019=cbind(fireBC0052019, BC005latValue2019, BC005lonValue2019)
+BC005ptLatLon2019 = combineBC0052019 %>% 
+  mutate(FireYr = BC0052019$YEAR) %>%
+  mutate(offcl__ = BC0052019$FIRE_ID) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+```{r}
+combineMA0142019=cbind(fireMA0142019, MA014latValue2019, MA014lonValue2019)
+MA014ptLatLon2019 = combineMA0142019 %>% 
+  mutate(FireYr = MA0142019$YEAR) %>%
+  mutate(offcl__ = MA0142019$FIRE_ID) %>%
+  dplyr::select(offcl__, FireYr, LAT, LON, x)
+```
+
+### save 
+```{r}
+st_write(BC005ptLatLon2019, "../outputs/PerimeterPoints/BC005PtsLatLon2019.shp", driver="ESRI Shapefile")
+st_write(MA014ptLatLon2019, "../outputs/PerimeterPoints/MA014PtsLatLon2019.shp", driver="ESRI Shapefile")
 ```
 
 # 2020
