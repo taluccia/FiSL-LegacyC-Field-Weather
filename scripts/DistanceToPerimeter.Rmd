@@ -10,8 +10,10 @@ output: html_document
 Distance from field site to perimeter.
 
 -- To measure the distance to the perimeter polygons need to be converted to line strings
--- Measure done in eaqual area projection
+-- Measure done in equal area projection, sphere and ellipsoid
 
+
+**Process by fire event**
 # Packages
 
 ```{r}
@@ -19,6 +21,8 @@ library(tidyverse)
 library(sp)
 library(sf)
 library(ids)
+library(units)
+library(geosphere)
 ```
 
 # Projections
@@ -30,187 +34,1047 @@ wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
 ea_proj = "+proj=aea +lat_0=50 +lon_0=-154 +lat_1=55 +lat_2=65 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
 ```
 
-azimuthal equidistant
+
+# Field points by Year
+## Data
+
+### 2015
 ```{r}
-proj_aeqd = "+proj=aeqd +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs" 
+fieldAggie2015=st_read("../data/FieldPointsShp/FieldAggie2015.shp", "FieldAggie2015")
+fieldBaker2015=st_read("../data/FieldPointsShp/FieldBaker2015.shp", "FieldBaker2015")
+fieldHay2015=st_read("../data/FieldPointsShp/FieldHay2015.shp", "FieldHay2015")
+fieldUscreek2015=st_read("../data/FieldPointsShp/FieldUSCreek2015.shp", "FieldUSCreek2015")
+```
+### 2019
+```{r}
+fieldBear2019=st_read("../data/FieldPointsShp/FieldBear2019.shp", "FieldBear2019")
+fieldCripple2019=st_read("../data/FieldPointsShp/FieldCripple2019.shp", "FieldCripple2019")
+fieldFrozen2019=st_read("../data/FieldPointsShp/FieldFrozen2019.shp", "FieldFrozen2019")
+fieldHess2019=st_read("../data/FieldPointsShp/FieldHess2019.shp", "FieldHess2019")
+fieldMarr2019=st_read("../data/FieldPointsShp/FieldMarr2019.shp", "FieldMarr2019")
+fieldPreach2019=st_read("../data/FieldPointsShp/FieldPreach2019.shp", "FieldPreach2019")
+fieldShovel2019=st_read("../data/FieldPointsShp/FieldShovel2019.shp", "FieldShovel2019")
+fieldTractor2019=st_read("../data/FieldPointsShp/FieldTractor2019.shp", "FieldTractor2019")
+fieldBC0052019=st_read("../data/FieldPointsShp/FieldBC0052019.shp", "FieldBC0052019")
+fieldMA0142019 = st_read("../data/FieldPointsShp/FieldMA0142019.shp", "FieldMA0142019")
 ```
 
-# Data
-## Field points by Year
-
 ```{r}
-fieldpts2015 = st_read("../data/FieldPointsShp/FieldPoints2015.shp", "FieldPoints2015")
-fieldpts2019 = st_read("../data/FieldPointsShp/FieldPoints2019.shp", "FieldPoints2019")
 fieldpts2020 = st_read("../data/FieldPointsShp/FieldPoints2020.shp", "FieldPoints2020")
 fieldpts2021 = st_read("../data/FieldPointsShp/FieldPoints2021.shp", "FieldPoints2021")
 ```
 
+# Process by fire event
+# 2015
+## 2015 Aggie
+### Data
 ```{r}
-fieldpts2021
-```
-# Fire perimeters
-```{r}
-fires = st_read("../data/firePolygons/AK_CA_firePolygons.shp", "AK_CA_firePolygons")
-```
-
-```{r}
-fires
+aggie2015 = st_read("../data/PerimeterPoints/AggiePtsLatLon2015.shp", "AggiePtsLatLon2015")
 ```
 
+### 2D Find nearest point and measure distance
 ```{r}
-munson2021 = st_read("../data/firePolygons/Munson2021AK/235_Munson_Creek_20210805_1337.shp", "235_Munson_Creek_20210805_1337")
-```
-
-# Split fires by year
-
-```{r}
-fires2015 = fires %>% filter(FireYear == 2015) 
-fires2019 = fires %>% filter(FireYear == 2019) 
-fires2020 = fires %>% filter(FireYear == 2020)
-fires2021 = fires %>% filter(FireYear == 2021)
-```
-
-# Fires to equal area projection
-```{r}
-fires2015ea = st_transform(fires2015, crs = ea_proj)
-fires2019ea = st_transform(fires2019, crs = ea_proj)
-fires2020ea = st_transform(fires2020, crs = ea_proj)
-fires2021ea = st_transform(fires2021, crs = ea_proj)
-```
-
-```{r}
-munson2021ea = st_transform(munson2021, crs = ea_proj)
-```
-# Check projection
-```{r}
-st_crs(fires2020ea)$proj4string
-st_crs(fires2020ea)$epsg
-
-st_crs(fieldpts2020)$proj4string
-st_crs(fieldpts2020)$epsg
-
-st_crs(munson2021ea)$proj4string
-st_crs(munson2021ea)$epsg
-```
-# Attributes
-```{r}
-head(fires2015ea)
-head(fieldpts2020)
-```
-# plot fire years
-```{r}
-ggplot() + 
-  geom_sf(data = fires2015ea, fill = "#6C7A86", colour="#A9AB9D") +
-  geom_sf(data = fieldpts2015, fill=NA, colour = "#FFFFFF") +
-  coord_sf()
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data = fires2019ea, fill = "#6C7A86", colour="#A9AB9D") +
-  geom_sf(data = fieldpts2019, fill=NA, colour = "#FFFFFF") +
-  coord_sf()
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data = fires2020ea, fill = "#6C7A86", colour="#A9AB9D") +
-  geom_sf(data = fieldpts2020, fill=NA, colour = "#FFFFFF") +
-  coord_sf()
-```
-
-```{r}
-ggplot() + 
-  geom_sf(data = fires2021ea, fill = "#6C7A86", colour="#A9AB9D") +
-  geom_sf(data = fieldpts2021, fill=NA, colour = "#FFFFFF") +
-  coord_sf()
-```
-
-# Process by year
-## 2015
-### Distance to edge
-```{r}
-Fires2015MLS = st_geometry(obj = fires2015ea) %>% st_cast(to = 'MULTILINESTRING')
-```
-```{r}
-edge2015=fieldpts2015 %>%
-  mutate(edge_m = st_distance(., Fires2015MLS, by_element=TRUE)) %>%
+edgeAggie2015=fieldAggie2015 %>%
+  mutate(nearestEdge = st_nearest_feature(., aggie2015)) %>%
+  mutate(edgeEa = st_distance(., aggie2015[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
   st_drop_geometry(.)
-```
-```{r}
-edge2015
-```
-### Write to cvs
-```{r}
-write.csv(edge2015,file = "../outputs/EdgeDistance2015.csv")
+
 ```
 
-## 2019
-### Distance to edge
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
 ```{r}
-Fires2019MLS = st_geometry(obj = fires2019ea) %>% st_cast(to = 'MULTILINESTRING')
+Aggie_near2015 <- st_join(fieldAggie2015, aggie2015, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Aggie_near2015
 ```
 ```{r}
-edge2019=fieldpts2019 %>%
-  mutate(edge_m = st_distance(., Fires2019MLS, by_element=TRUE)) %>%
+edgeSphAggie2015 = Aggie_near2015 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpAggie2015 = Aggie_near2015 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+head(edgeAggie2015)
+head(edgeSphAggie2015)
+head(edgeEllpAggie2015)
+```
+
+#### Combine into single DF
+```{r}
+
+edgeAggie2015 %>%
+  full_join(edgeSphAggie2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" ))
+
+```
+```{r}
+joinAggie2015_1 = edgeAggie2015 %>%
+  full_join(edgeSphAggie2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpAggie2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinAggie2015_1
+```
+
+
+
+## Baker
+### Data
+```{r}
+Baker2015 = st_read("../data/PerimeterPoints/BakerPtsLatLon2015.shp", "BakerPtsLatLon2015")
+```
+### 2D Find nearest point and measure distance
+```{r}
+edgeBaker2015=fieldBaker2015 %>%
+  mutate(nearestEdge = st_nearest_feature(., Baker2015)) %>%
+  mutate(edgeEa = st_distance(., Baker2015[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
   st_drop_geometry(.)
-```
-```{r}
-edge2019
-```
-### Write to cvs
-```{r}
-write.csv(edge2019,file = "../outputs/EdgeDistance2019.csv")
+
 ```
 
-## 2020
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
 ```{r}
-fieldpts2020
-```
-### Distance to edge
-```{r}
-st_geometry(obj = fires2020ea) %>% st_cast(to = 'MULTILINESTRING') %>% st_distance(y = fieldpts2020)
+Baker_near2015 <- st_join(fieldBaker2015, Baker2015, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
 ```
 
 ```{r}
-Fires2020MLS = st_geometry(obj = fires2020ea) %>% st_cast(to = 'MULTILINESTRING')
+Baker_near2015
 ```
+```{r}
+edgeSphBaker2015 = Baker_near2015 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpBaker2015 = Baker_near2015 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeBaker2015
+edgeSphBaker2015
+edgeEllpBaker2015
+```
+
+#### Combine into single DF
+```{r}
+joinBaker2015_1 = edgeBaker2015 %>%
+  full_join(edgeSphBaker2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpBaker2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinBaker2015_1
+```
+
+## 2015 Hay
+### Data
+```{r}
+Hay2015 = st_read("../data/PerimeterPoints/HayPtsLatLon2015.shp", "HayPtsLatLon2015")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeHay2015=fieldHay2015 %>%
+  mutate(nearestEdge = st_nearest_feature(., Hay2015)) %>%
+  mutate(edgeEa = st_distance(., Hay2015[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Hay_near2015 <- st_join(fieldHay2015, Hay2015, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Hay_near2015
+```
+```{r}
+edgeSphHay2015 = Hay_near2015 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpHay2015 = Hay_near2015 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeHay2015
+edgeSphHay2015
+edgeEllpHay2015
+```
+
+#### Combine into single DF
+```{r}
+joinHay2015_1 = edgeHay2015 %>%
+  full_join(edgeSphHay2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpHay2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinHay2015_1
+```
+
+## 2015 US Creek
+### Data
+```{r}
+Uscreek2015 = st_read("../data/PerimeterPoints/USCreekPtsLatLon2015.shp", "USCreekPtsLatLon2015")
+```
+
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeUscreek2015=fieldUscreek2015 %>%
+  mutate(nearestEdge = st_nearest_feature(., Uscreek2015)) %>%
+  mutate(edgeEa = st_distance(., Uscreek2015[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Uscreek_near2015 <- st_join(fieldUscreek2015, Uscreek2015, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Uscreek_near2015
+```
+```{r}
+edgeSphUscreek2015 = Uscreek_near2015 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpUscreek2015 = Uscreek_near2015 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeUscreek2015
+edgeSphUscreek2015
+edgeEllpUscreek2015
+```
+
+#### Combine into single DF
+```{r}
+joinUscreek2015_1 = edgeUscreek2015 %>%
+  full_join(edgeSphUscreek2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpUscreek2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinUscreek2015_1
+```
+
+## Combine 2015
+```{r}
+combo2015_1 = rbind(joinAggie2015_1, joinBaker2015_1)
+combo2015_2 = rbind(joinHay2015_1, joinUscreek2015_1)
+combo2015All = rbind(combo2015_1, combo2015_2)
+```
+
+```{r}
+combo2015All
+```
+
+# 2019
+## 2019 Bear 
+### Data
+
+```{r}
+Bear2019 = st_read("../data/PerimeterPoints/BearPtsLatLon2019.shp", "BearPtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeBear2019=fieldBear2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Bear2019)) %>%
+  mutate(edgeEa = st_distance(., Bear2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Bear_near2019 <- st_join(fieldBear2019, Bear2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Bear_near2019
+```
+```{r}
+edgeSphBear2019 = Bear_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpBear2019 = Bear_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeBear2019
+edgeSphBear2019
+edgeEllpBear2019
+```
+
+#### Combine into single DF
+```{r}
+joinBear2019_1 = edgeBear2019 %>%
+  full_join(edgeSphBear2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpBear2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinBear2019_1
+```
+
+
+## 2019 Cripple
+### Data
+```{r}
+Cripple2019 = st_read("../data/PerimeterPoints/CripplePtsLatLon2019.shp", "CripplePtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeCripple2019=fieldCripple2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Cripple2019)) %>%
+  mutate(edgeEa = st_distance(., Cripple2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Cripple_near2019 <- st_join(fieldCripple2019, Cripple2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Cripple_near2019
+```
+```{r}
+edgeSphCripple2019 = Cripple_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpCripple2019 = Cripple_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeCripple2019
+edgeSphCripple2019
+edgeEllpCripple2019
+```
+
+#### Combine into single DF
+```{r}
+joinCripple2019_1 = edgeCripple2019 %>%
+  full_join(edgeSphCripple2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpCripple2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinCripple2019_1
+```
+
+## 2019 Frozen Calf
+### Data
+```{r}
+Frozen2019 = st_read("../data/PerimeterPoints/frozenPtsLatLon2019.shp", "frozenPtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeFrozen2019=fieldFrozen2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Frozen2019)) %>%
+  mutate(edgeEa = st_distance(., Frozen2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Frozen_near2019 <- st_join(fieldFrozen2019, Frozen2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Frozen_near2019
+```
+```{r}
+edgeSphFrozen2019 = Frozen_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpFrozen2019 = Frozen_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeFrozen2019
+edgeSphFrozen2019
+edgeEllpFrozen2019
+```
+
+#### Combine into single DF
+```{r}
+joinFrozen2019_1 = edgeFrozen2019 %>%
+  full_join(edgeSphFrozen2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpFrozen2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinFrozen2019_1
+```
+
+## 2019 Hess Creek
+### Data
+
+```{r}
+Hess2019 = st_read("../data/PerimeterPoints/HessPtsLatLon2019.shp", "HessPtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeHess2019=fieldHess2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Hess2019)) %>%
+  mutate(edgeEa = st_distance(., Hess2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Hess_near2019 <- st_join(fieldHess2019, Hess2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Hess_near2019
+```
+```{r}
+edgeSphHess2019 = Hess_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpHess2019 = Hess_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeHess2019
+edgeSphHess2019
+edgeEllpHess2019
+```
+
+#### Combine into single DF
+```{r}
+joinHess2019_1 = edgeHess2019 %>%
+  full_join(edgeSphHess2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpHess2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinHess2019_1
+```
+
+
+## 2019 Marr
+###Data
+```{r}
+Marr2019 = st_read("../data/PerimeterPoints/MarrPtsLatLon2019.shp", "MarrPtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeMarr2019=fieldMarr2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Marr2019)) %>%
+  mutate(edgeEa = st_distance(., Marr2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Marr_near2019 <- st_join(fieldMarr2019, Marr2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Marr_near2019
+```
+```{r}
+edgeSphMarr2019 = Marr_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpMarr2019 = Marr_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeMarr2019
+edgeSphMarr2019
+edgeEllpMarr2019
+```
+
+#### Combine into single DF
+```{r}
+joinMarr2019_1 = edgeMarr2019 %>%
+  full_join(edgeSphMarr2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpMarr2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinMarr2019_1
+```
+
+
+## 2019 Preach
+### Data
+```{r}
+Preach2019 = st_read("../data/PerimeterPoints/PreachPtsLatLon2019.shp", "PreachPtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgePreach2019=fieldPreach2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Preach2019)) %>%
+  mutate(edgeEa = st_distance(., Preach2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Preach_near2019 <- st_join(fieldPreach2019, Preach2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Preach_near2019
+```
+```{r}
+edgeSphPreach2019 = Preach_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpPreach2019 = Preach_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgePreach2019
+edgeSphPreach2019
+edgeEllpPreach2019
+```
+
+#### Combine into single DF
+```{r}
+joinPreach2019_1 = edgePreach2019 %>%
+  full_join(edgeSphPreach2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpPreach2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinPreach2019_1
+```
+
+## 2019 Shovel
+### Data
+
+```{r}
+Shovel2019 = st_read("../data/PerimeterPoints/ShovelPtsLatLon2019.shp", "ShovelPtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeShovel2019=fieldShovel2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Shovel2019)) %>%
+  mutate(edgeEa = st_distance(., Shovel2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Shovel_near2019 <- st_join(fieldShovel2019, Shovel2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Shovel_near2019
+```
+```{r}
+edgeSphShovel2019 = Shovel_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpShovel2019 = Shovel_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeShovel2019
+edgeSphShovel2019
+edgeEllpShovel2019
+```
+
+#### Combine into single DF
+```{r}
+joinShovel2019_1 = edgeShovel2019 %>%
+  full_join(edgeSphShovel2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpShovel2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinShovel2019_1
+```
+
+## 2019 Tractor Trail 2
+### Data
+```{r}
+Tractor2019 = st_read("../data/PerimeterPoints/TractorPtsLatLon2019.shp", "TractorPtsLatLon2019")
+```
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeTractor2019=fieldTractor2019 %>%
+  mutate(nearestEdge = st_nearest_feature(., Tractor2019)) %>%
+  mutate(edgeEa = st_distance(., Tractor2019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+Tractor_near2019 <- st_join(fieldTractor2019, Tractor2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+Tractor_near2019
+```
+```{r}
+edgeSphTractor2019 = Tractor_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpTractor2019 = Tractor_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeTractor2019
+edgeSphTractor2019
+edgeEllpTractor2019
+```
+
+#### Combine into single DF
+```{r}
+joinTractor2019_1 = edgeTractor2019 %>%
+  full_join(edgeSphTractor2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpTractor2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinTractor2019_1
+```
+
+## 2019 2019BC005
+### Data
+```{r}
+BC0052019 = st_read("../data/PerimeterPoints/BC005PtsLatLon2019.shp", "BC005PtsLatLon2019")
+```
+
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeBC0052019=fieldBC0052019 %>%
+  mutate(nearestEdge = st_nearest_feature(., BC0052019)) %>%
+  mutate(edgeEa = st_distance(., BC0052019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+BC005_near2019 <- st_join(fieldBC0052019, BC0052019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+BC005_near2019
+```
+```{r}
+edgeSphBC0052019 = BC005_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpBC0052019 = BC005_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeBC0052019
+edgeSphBC0052019
+edgeEllpBC0052019
+```
+
+#### Combine into single DF
+```{r}
+joinBC0052019_1 = edgeBC0052019 %>%
+  full_join(edgeSphBC0052019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpBC0052019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinBC0052019_1
+```
+
+## 2019 2019MA014
+###Data
+```{r}
+MA0142019 = st_read("../data/PerimeterPoints/MA014PtsLatLon2019.shp", "MA014PtsLatLon2019")
+```
+
+
+### 2D Find nearest point and measure distance
+```{r}
+edgeMA0142019=fieldMA0142019 %>%
+  mutate(nearestEdge = st_nearest_feature(., MA0142019)) %>%
+  mutate(edgeEa = st_distance(., MA0142019[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
+  st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+MA014_near2019 <- st_join(fieldMA0142019, MA0142019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+MA014_near2019
+```
+```{r}
+edgeSphMA0142019 = MA014_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllpMA0142019 = MA014_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+```{r}
+edgeMA0142019
+edgeSphMA0142019
+edgeEllpMA0142019
+```
+
+#### Combine into single DF
+```{r}
+joinMA0142019_1 = edgeMA0142019 %>%
+  full_join(edgeSphMA0142019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllpMA0142019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+joinMA0142019_1
+```
+
+## Combine 2019
+```{r}
+combo2019_1 = rbind(joinBear2019_1, joinCripple2019_1)
+combo2019_2 = rbind(joinFrozen2019_1, joinHess2019_1)
+combo2019_3 = rbind(joinMarr2019_1, joinPreach2019_1)
+combo2019_4 = rbind(joinShovel2019_1, joinTractor2019_1)
+combo2019_5 = rbind(joinBC0052019_1, joinMA0142019_1)
+
+combo2019_1_2 = rbind(combo2019_1, combo2019_2)
+combo2019_3_4 = rbind(combo2019_3, combo2019_4)
+combo20191To4 = rbind(combo2019_1_2,combo2019_3_4)
+combo2019All = rbind(combo20191To4, combo2019_5)
+```
+
+```{r}
+combo2019All
+```
+
+
+# 2020
+## 2020 Isom
+### Data
+```{r}
+isom2020 = st_read("../data/PerimeterPoints/IsomPtsLatLon2020.shp", "IsomPtsLatLon2020")
+```
+```{r}
+isom2020
+```
+
+### 2D Find nearest point and measure distance
 ```{r}
 edge2020=fieldpts2020 %>%
-  mutate(edge_m = st_distance(., Fires2020MLS, by_element=TRUE)) %>%
+  mutate(nearestEdge = st_nearest_feature(., isom2020)) %>%
+  mutate(edgeEa = st_distance(., isom2020[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
   st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+isom_near2020 <- st_join(fieldpts2020, isom2020, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+isom_near2020
+```
+```{r}
+edgeSph2020 = isom_near2020 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllp2020 = isom_near2020 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
 ```
 
 ```{r}
 edge2020
+edgeSph2020
+edgeEllp2020
 ```
-### Write to cvs
+#### Combine into single DF
 ```{r}
-write.csv(edge2020,file = "../outputs/EdgeDistance2020.csv")
+join2020_1 = edge2020 %>%
+  full_join(edgeSph2020, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllp2020, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+join2020_1
 ```
 
-## 2021
 ```{r}
-ggplot() + 
-  geom_sf(data = munson2021ea, fill = "#6C7A86", colour="#A9AB9D")  +
-  coord_sf()
+join2020_1
 ```
-### Distance to edge
+
+
+## 2021 Munson Creek
+### Data
 ```{r}
-Fires2021MLS = st_geometry(obj = fires2021ea) %>% st_cast(to = 'MULTILINESTRING')
+munson2021 = st_read("../data/PerimeterPoints/MunsonPtsLatLon2021.shp", "MunsonPtsLatLon2021")
 ```
+```{r}
+munson2021
+```
+
+### 2D Find nearest point and measure distance
 ```{r}
 edge2021=fieldpts2021 %>%
-  mutate(edge_m = st_distance(., Fires2021MLS, by_element=TRUE)) %>%
+  mutate(nearestEdge = st_nearest_feature(., munson2021)) %>%
+  mutate(edgeEa = st_distance(., munson2021[nearestEdge,], by_element=TRUE, which = "Euclidean")) %>%
   st_drop_geometry(.)
+
+```
+
+
+### 3D
+#### join nearest feature
+ Join df with df1, based on the nearest feature:
+```{r}
+munson_near2021 <- st_join(fieldpts2021, munson2021, join = st_nearest_feature) %>%
+  st_drop_geometry(.) %>%
+  dplyr::select(-offcl__.y, -FireYr.y) %>%
+  rename(FireYr = FireYr.x, offcl__ = offcl__.x)
+```
+
+```{r}
+munson_near2021
+```
+```{r}
+edgeSph2021 = munson_near2021 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+edgeEllp2021 = munson_near2021 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
 ```
 
 ```{r}
 edge2021
+edgeSph2021
+edgeEllp2021
+```
+#### Combine into single DF
+```{r}
+join2021_1 = edge2021 %>%
+  full_join(edgeSph2021, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(edgeEllp2021, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "LAT", "LON" )) %>%
+  drop_units()
+
+join2021_1
 ```
 
-### Write to cvs
 ```{r}
-write.csv(edge2021,file = "../outputs/EdgeDistance2021.csv")
+join2021_1
+```
+
+# Stack rows for all fires & Years
+```{r}
+combo2015All
+combo2019All
+```
+
+```{r}
+join2020_1 
+join2021_1
+```
+
+```{r}
+comboYears1 = rbind(combo2015All, combo2019All)
+comboYears2 = rbind(join2020_1, join2021_1)
+ComboAllYears = rbind(comboYears1, comboYears2)
+
+```
+
+# Write to cvs
+```{r}
+write.csv(ComboAllYears,file = "../outputs/EdgeDistanceAll.csv")
 ```
 
