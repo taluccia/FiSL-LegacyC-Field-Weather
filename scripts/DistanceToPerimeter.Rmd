@@ -1073,8 +1073,17 @@ ComboAllYears = rbind(comboYears1, comboYears2)
 
 ```
 
+
+```{r}
+ComboAllYears1 = ComboAllYears %>% dplyr::select(project:mstr_cl, edgeEa, distSph, distEllp)
+```
+
+```{r}
+ComboAllYears1
+```
+
 # Write to cvs
 ```{r}
-write.csv(ComboAllYears,file = "../outputs/EdgeDistanceAll.csv")
+write.csv(ComboAllYears1,file = "../outputs/EdgeDistanceAll.csv")
 ```
 
