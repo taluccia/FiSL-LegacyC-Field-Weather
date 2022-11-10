@@ -48,6 +48,7 @@ plot(r2019)
 ```
 
 
+
 # Raster to points by year
 
 ## 2015 Raster to points
@@ -91,15 +92,19 @@ r2019_pts = as.points(r2019, values=TRUE, na.rm=TRUE)
 pts2019 = st_as_sf(r2019_pts)
 ```
 
+```{r}
+pts2019  %>% 
+  filter(unburned==1)
+```
 ### Filter for unburned
 ```{r}
 unburned2019 = pts2019  %>% 
-  filter(unburned==1)
+  filter(unburned==1) %>% 
+  mutate(UniqueId = random_id(n= 298913, bytes = 4)) %>%
+  dplyr::select(UniqueId, unburned, geometry)
 ```
 
-%>% 
-  mutate(UniqueId = random_id(n= 205148, bytes = 4)) %>%
-  dplyr::select(UniqueId, unburned, geometry)
+
 ### Write to shapefile all points
 
 ```{r eval=FALSE, include=FALSE}
