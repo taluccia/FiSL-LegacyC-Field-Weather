@@ -23,7 +23,11 @@ library(sf)
 library(ids)
 library(terra)
 library(gdalUtilities)
+library(geodist)
+library(lwgeom)
+library(geosphere)
 ```
+
 # Projections
 ```{r}
 wgs_proj = "+proj=longlat +datum=WGS84 +no_defs"
@@ -45,78 +49,42 @@ fieldpts2020 = st_read("../data/FieldPointsShp/FieldPoints2020.shp", "FieldPoint
 fieldpts2021 = st_read("../data/FieldPointsShp/FieldPoints2021.shp", "FieldPoints2021")
 ```
 
-## Raster
+## Unburned points
 ```{r}
-r2015<-rast("../data/rasters/unburnedMedian/unburned_Median2015.tif")
-r2019<-rast("../data/rasters/unburnedMedian/unburned_Median2019.tif")
-r2020<-rast("../data/rasters/unburnedMedian/unburned_Median2020.tif")
-r2021<-rast("../data/rasters/unburnedMedian/unburned_Median2021.tif")
+unburned2015 = st_read("../data/UnburnedPoints/UnburnedPtsLatLon2015.shp", "UnburnedPtsLatLon2015")
+unburned2019 = st_read("../data/UnburnedPoints/UnburnedPtsLatLon2019.shp", "UnburnedPtsLatLon2019")
+unburned2020 = st_read("../data/UnburnedPoints/UnburnedPtsLatLon2020.shp", "UnburnedPtsLatLon2020")
+unburned2021 = st_read("../data/UnburnedPoints/UnburnedPtsLatLon2021.shp", "UnburnedPtsLatLon2021")
 ```
 
-```{r eval=FALSE, include=FALSE}
-r2015
-r2019
-r2020
-r2021
-```
-
-```{r eval=FALSE, include=FALSE}
-plot(r2015)
-plot(r2019)
-```
-
-# Process by year
-
-## 2015 
-### Raster to points
 ```{r}
-r2015_pts = as.points(r2015, values=TRUE, na.rm=TRUE)
+head(unburned2015)
 ```
 
-### Make into sf object
-```{r}
-pts2015 = st_as_sf(r2015_pts)
-```
 
-### Filter for unburned
-```{r}
-unburned2015 = pts2015 %>% filter(unburned==1)
-```
+# 2D--Distance to nearest unburned point (cartesian measure)
 
-### Distance to nearest unburned point
+## 2015
 ```{r}
 dist2015= fieldpts2015 %>%
   mutate(nearest = st_nearest_feature(., unburned2015)) %>%
-  mutate(dist_m = st_distance(., unburned2015[nearest,], by_element=TRUE)) %>%
+  mutate(distEa = st_distance(., unburned2015[nearest,], by_element=TRUE)) %>%
   st_drop_geometry(.) 
 ```
 
+```{r}
+head(dist2015)
+```
 ### Write to cvs
 ```{r}
 write.csv(dist2015,file = "../outputs/UnburnedDistance2015.csv")
 ```
 
 ## 2019 
-### Raster to points
-```{r}
-r2019_pts = as.points(r2019, values=TRUE, na.rm=TRUE)
-```
-
-### Make into sf object
-```{r}
-pts2019 = st_as_sf(r2019_pts)
-```
-
-### Filter for unburned
-```{r}
-unburned2019 = pts2019  %>% filter(unburned==1)
-```
-
-### Distance to nearest unburned point
 ```{r}
 dist2019= fieldpts2019 %>%
   mutate(nearest = st_nearest_feature(., unburned2019)) %>%
-  mutate(dist_m = st_distance(., unburned2019[nearest,], by_element=TRUE)) %>%
+  mutate(distEa = st_distance(., unburned2019[nearest,], by_element=TRUE)) %>%
   st_drop_geometry(.)
 ```
 
@@ -124,27 +92,12 @@ dist2019= fieldpts2019 %>%
 ```{r}
 write.csv(dist2019,file = "../outputs/UnburnedDistance2019.csv")
 ```
+
 ## 2020 
-### Raster to points
-```{r}
-r2020_pts = as.points(r2020, values=TRUE, na.rm=TRUE)
-```
-
-### Make into sf object
-```{r}
-pts2020 = st_as_sf(r2020_pts)
-```
-
-### Filter for unburned
-```{r}
-unburned2020 = pts2020  %>% filter(unburned==1)
-```
-
-### Distance to nearest unburned point
 ```{r}
 dist2020= fieldpts2020 %>%
   mutate(nearest = st_nearest_feature(., unburned2020)) %>%
-  mutate(dist_m = st_distance(., unburned2020[nearest,], by_element=TRUE)) %>%
+  mutate(distEa = st_distance(., unburned2020[nearest,], by_element=TRUE)) %>%
   st_drop_geometry(.)
 ```
 
@@ -155,30 +108,245 @@ write.csv(dist2020,file = "../outputs/UnburnedDistance2020.csv")
 
 
 ## 2021 
-### Raster to points
-```{r}
-r2021_pts = as.points(r2021, values=TRUE, na.rm=TRUE)
-```
-
-### Make into sf object
-```{r}
-pts2021 = st_as_sf(r2021_pts)
-```
-
-### Filter for unburned
-```{r}
-unburned2021 = pts2021  %>% filter(unburned==1)
-```
-
-### Distance to nearest unburned point
 ```{r}
 dist2021= fieldpts2021 %>%
   mutate(nearest = st_nearest_feature(., unburned2021)) %>%
-  mutate(dist_m = st_distance(., unburned2021[nearest,], by_element=TRUE)) %>%
+  mutate(distEa = st_distance(., unburned2021[nearest,], by_element=TRUE, which = "Euclidean")) %>%
   st_drop_geometry(.)
 ```
 
+```{r}
+dist2021
+```
 ### Write to cvs
 ```{r}
 write.csv(dist2021,file = "../outputs/UnburnedDistance2021.csv")
 ```
+
+
+# 3D--Distance to unburned (geodesic measure)
+
+## 2015
+### view dataframe
+```{r}
+fieldpts2015
+unburned2015
+```
+
+### transform to wgs 84
+```{r}
+fieldpts2015wgs = st_transform(fieldpts2015, crs = wgs_proj)
+unburned2015wgs = st_transform(unburned2015, crs = wgs_proj)
+```
+
+### join nearest feature
+```{r}
+# Join df with df1, based on the nearest feature:
+df_near2015 <- st_join(fieldpts2015, unburned2015, join = st_nearest_feature) %>%
+  st_drop_geometry(.) 
+```
+
+```{r}
+df_near2015
+```
+### Calculate dist Spheroid
+```{r}
+dist_sph2015 = df_near2015 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+### Calculate distance Ellipsoid
+```{r}
+dist_ellp2015 = df_near2015 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+## 2019
+### view dataframe
+```{r}
+fieldpts2019
+unburned2019
+```
+
+### transform to wgs 84
+```{r}
+fieldpts2019wgs = st_transform(fieldpts2019, crs = wgs_proj)
+unburned2019wgs = st_transform(unburned2019, crs = wgs_proj)
+```
+
+### join nearest feature
+```{r}
+# Join df with df1, based on the nearest feature:
+df_near2019 <- st_join(fieldpts2019, unburned2019, join = st_nearest_feature) %>%
+  st_drop_geometry(.) 
+```
+
+```{r}
+df_near2019
+```
+ 
+```{r}
+dist_sph2019 = df_near2019 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+dist_ellp2019 = df_near2019 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+## 2020
+### view dataframe
+```{r}
+fieldpts2020
+unburned2020
+```
+
+### transform to wgs 84
+```{r}
+fieldpts2020wgs = st_transform(fieldpts2020, crs = wgs_proj)
+unburned2020wgs = st_transform(unburned2020, crs = wgs_proj)
+```
+
+### join nearest feature
+```{r}
+# Join df with df1, based on the nearest feature:
+df_near2020 <- st_join(fieldpts2020, unburned2020, join = st_nearest_feature) %>%
+  st_drop_geometry(.) 
+```
+
+```{r}
+df_near2020
+```
+ 
+```{r}
+dist_sph2020 = df_near2020 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+dist_ellp2020 = df_near2020 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+## 2021
+
+### view dataframe
+```{r}
+fieldpts2021
+unburned2021
+```
+
+### transform to wgs 84
+```{r}
+fieldpts2021wgs = st_transform(fieldpts2021, crs = wgs_proj)
+unburned2021wgs = st_transform(unburned2021, crs = wgs_proj)
+```
+
+### join nearest feature
+```{r}
+# Join df with df1, based on the nearest feature:
+df_near2021 <- st_join(fieldpts2021, unburned2021, join = st_nearest_feature) %>%
+  st_drop_geometry(.) 
+```
+
+```{r}
+df_near2021
+```
+ 
+```{r}
+dist_sph2021 = df_near2021 %>% 
+  rowwise() %>% 
+  mutate(distSph = distHaversine(c(longitd, latitud), c(LON, LAT)))
+  
+```
+
+```{r}
+dist_ellp2021 = df_near2021 %>% 
+  rowwise() %>% 
+  mutate(distEllp = distVincentyEllipsoid(c(longitd, latitud), c(LON, LAT), a=6378137, b=6356752.3142, f=1/298.257223563))
+```
+
+
+# Combine data into Single Dataframe
+```{r}
+dist2021
+dist_sph2021
+dist_ellp2021
+```
+
+```{r}
+dist2019
+dist_sph2019
+dist_ellp2019
+```
+
+## Combine Colums for each year
+
+### 2015
+
+```{r}
+join2015_1 = dist2015 %>%
+  full_join(dist_sph2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(dist_ellp2015, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "UniqueId", "unburned", "LAT", "LON" )) %>%
+  drop_units()
+
+join2015_1
+```
+
+### 2019
+
+```{r}
+join2019_1 = dist2019 %>%
+  full_join(dist_sph2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(dist_ellp2019, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "UniqueId", "unburned", "LAT", "LON" )) %>%
+  drop_units()
+
+join2019_1
+```
+
+### 2020
+
+```{r}
+join2020_1 = dist2020 %>%
+  full_join(dist_sph2020, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(dist_ellp2020, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "UniqueId", "unburned", "LAT", "LON" )) %>%
+  drop_units()
+
+join2020_1
+```
+
+### 2021
+```{r}
+join2021_1 = dist2021 %>%
+  full_join(dist_sph2021, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl" )) %>%
+  full_join(dist_ellp2021, by = c("project", "FireYr", "fir_scr", "offcl__", "site", "plot", "latitud", "longitd", "elevatn", "slope", "aspect", "mstr_cl", "UniqueId", "unburned", "LAT", "LON" )) %>%
+  drop_units()
+
+join2021_1
+```
+
+## Stack rows to combine years
+```{r}
+combo1 = rbind(join2015_1, join2019_1)
+combo2 = rbind(join2020_1, join2021_2)
+combo3 = rbind(combo1, combo2)
+```
+
+```{r}
+final = combo3 %>% dplyr::select(project:mstr_cl, distEa, distSph, distEllp)
+```
+
+```{r}
+write.csv(final,file = "../outputs/DistUnburnedPixAll.csv")
+```
+**THE END**
