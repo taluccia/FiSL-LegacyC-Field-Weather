@@ -1,0 +1,116 @@
+---
+title: "Field Pts by fire"
+author: "Anna Talucci"
+date: '2022-11-09'
+output: html_document
+---
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+
+# Field points by Year
+## Data
+```{r}
+fieldpts2015 = st_read("../data/FieldPointsShp/FieldPoints2015.shp", "FieldPoints2015")
+fieldpts2019 = st_read("../data/FieldPointsShp/FieldPoints2019.shp", "FieldPoints2019")
+```
+
+
+# Split by fire events
+## 2015
+```{r}
+unique(fieldpts2015$offcl__)
+```
+
+```{r}
+fieldAggie2015 = fieldpts2015 %>% filter(offcl__=="Aggie Creek")
+fieldAggie2015
+```
+
+```{r}
+fieldBaker2015 = fieldpts2015 %>% filter(offcl__=="Baker")
+fieldBaker2015
+```
+
+```{r}
+fieldHay2015 = fieldpts2015 %>% filter(offcl__=="Hay Slough")
+fieldHay2015
+```
+
+```{r}
+fieldUScr2015 = fieldpts2015 %>% filter(offcl__=="U.S. Creek" )
+fieldUScr2015
+```
+
+## Save 2015
+```{r}
+st_write(fieldAggie2015, "../outputs/FieldPointsShp/FieldAggie2015.shp", driver="ESRI Shapefile")
+st_write(fieldBaker2015, "../outputs/FieldPointsShp/FieldBaker2015.shp", driver="ESRI Shapefile")
+st_write(fieldHay2015, "../outputs/FieldPointsShp/FieldHay2015.shp", driver="ESRI Shapefile")
+st_write(fieldUScr2015, "../outputs/FieldPointsShp/FieldUSCreek2015.shp", driver="ESRI Shapefile")
+```
+
+# 2019
+
+```{r}
+unique(fieldpts2019$offcl__)
+```
+```{r}
+fieldBear2019 = fieldpts2019 %>% filter(offcl__=="Bearnose Hill")
+fieldBear2019
+```
+```{r}
+fieldCripple2019 = fieldpts2019 %>% filter(offcl__=="Cripple Creek")
+fieldCripple2019
+```
+```{r}
+fieldFrozen2019 = fieldpts2019 %>% filter(offcl__=="Frozen Calf")
+fieldFrozen2019
+```
+```{r}
+fieldHess2019 = fieldpts2019 %>% filter(offcl__=="Hess Creek")
+fieldHess2019
+```
+```{r}
+fieldMarr2019 = fieldpts2019 %>% filter(offcl__=="Marr")
+fieldMarr2019
+```
+```{r}
+fieldPreach2019 = fieldpts2019 %>% filter(offcl__=="Preacher Creek")
+fieldPreach2019
+```
+```{r}
+fieldShovel2019 = fieldpts2019 %>% filter(offcl__=="Shovel Creek")
+fieldShovel2019
+```
+```{r}
+fieldTractor2019 = fieldpts2019 %>% filter(offcl__=="Tractor Trail 2")
+fieldTractor2019
+```
+
+```{r}
+fieldBC0052019 = fieldpts2019 %>% filter(offcl__=="2019BC005")
+fieldBC0052019
+```
+
+```{r}
+fieldMA0142019 = fieldpts2019 %>% filter(offcl__=="2019MA014")
+fieldMA0142019
+```
+## Save 
+```{r}
+st_write(fieldBear2019, "../outputs/FieldPointsShp/FieldBear2019.shp", driver="ESRI Shapefile")
+st_write(fieldCripple2019, "../outputs/FieldPointsShp/FieldCripple2019.shp", driver="ESRI Shapefile")
+st_write(fieldFrozen2019, "../outputs/FieldPointsShp/FieldFrozen2019.shp", driver="ESRI Shapefile")
+st_write(fieldHess2019, "../outputs/FieldPointsShp/FieldHess2019.shp", driver="ESRI Shapefile")
+st_write(fieldMarr2019, "../outputs/FieldPointsShp/FieldMarr2019.shp", driver="ESRI Shapefile")
+st_write(fieldPreach2019, "../outputs/FieldPointsShp/FieldPreach2019.shp", driver="ESRI Shapefile")
+st_write(fieldShovel2019, "../outputs/FieldPointsShp/FieldShovel2019.shp", driver="ESRI Shapefile")
+st_write(fieldTractor2019, "../outputs/FieldPointsShp/FieldTractor2019.shp", driver="ESRI Shapefile")
+st_write(fieldBC0052019, "../outputs/FieldPointsShp/FieldBC0052019.shp", driver="ESRI Shapefile")
+st_write(fieldMA0142019, "../outputs/FieldPointsShp/FieldMA0142019.shp", driver="ESRI Shapefile")
+```
