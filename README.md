@@ -1,5 +1,6 @@
 # FiSL-LegacyC-Field-Weather
 
+Scripts are used to process spetial data and then calculate distance between field plots and the nearest unburned pixel and the nearest edge (i.e., fire perimeter).
 
 ## Fire 
 
@@ -30,9 +31,9 @@ Fire year     | Field fire scar name    | Official fire Name or ID
 
 
 
-# Measuring Distance
+# Measuring Distances
 
-Distances between field plots and the nearest unburned pixel and nearest part of the fire perimeter were calculated with the `sf` package and `geosphere` package. Unburned pixels were acquired from the dNBR image for each fire using a threshold of 0.5. Each pixel was converted to a point. The distance between each field plot and nearest unburned point was calculated three ways: 1) based on Cartesian coordinates, 2) based on a spheroid, and 3) based on an ellipsoid. For the distance to the edge (i.e., fire perimeter), fire perimeters were converted to points and then distance betweeen field plots and the nearst point on the edge was calculated three ways: 1) based on Cartesian coordinates, 2) based on a spheroid, and 3) based on an ellipsoid.
+Distances between field plots and the nearest unburned pixel and nearest part of the fire perimeter were calculated with the `sf` package and `geosphere` package. Unburned pixels were acquired from the dNBR image for each fire using a threshold of 0.5. Each pixel was converted to a point. The distance between each field plot and nearest unburned point was calculated three ways: 1) based on Cartesian coordinates, 2) based on a spheroid, and 3) based on an ellipsoid. For the distance to the edge (i.e., fire perimeter), fire perimeters were converted to points and then distance between field plots and the nearest point on the edge was calculated three ways: 1) based on Cartesian coordinates, 2) based on a spheroid, and 3) based on an ellipsoid.
 
 The `geosphere` package was used to measure distance from Latitude and Longitude on a spheroid and Latitude and Longitude on an ellipsoid. [Link to](https://cran.r-project.org/web/packages/geosphere/geosphere.pdf) `geosphere` package
 
